@@ -24,35 +24,22 @@ Don't use this if
  - *expressjs* for the server
  - *webpack + babel* for bundling and transpiling
 
-## TODO
-- [x] PM2
-- [x] React-Router
-- [x] eslint + prettier
-- [x] App.css
-- [x] production build
-- [x] cache-busting (it's strictly not needed)
-- [ ] isomorphic-fetch
-- [ ] Hot module reload
-- [ ] Workbox for PWA
-- Page examples
- - [ ] Expose api, that returns server's time. Fetch data serverside on page-load, but not clientside. Only fetch clientside, when using BrowserRouter.
-
-
-## Setup server
+## 1. Setup server
 
 `npm init -y`
 creates an empty package.json that will hold the configuration of the project
 
 ### Install Babeljs
 
-`npm install @babel/core @babel/register @babel/cli @babel/preset-env`
+`npm install -D @babel/core @babel/cli @babel/preset-env @babel/register @babel/plugin-transform-runtime`
+
+TODO: Explain babeljs packages
 
 ### Install expressjs
 
-`npm install express morgan dotenv`
+`npm install express morgan`
 * express is an MVC framework for creating an HTTP server.
 * morgan creates log files
-* dotenv reads ENVIRONMENT variables
 
 ### Edit `.babelrc`
 
@@ -66,14 +53,11 @@ creates an empty package.json that will hold the configuration of the project
 
 ### Edit `src/server.js`
 
-
 ```javascript
 import express from 'express'
 import http from 'http'
 import logger from 'morgan'
 import path from 'path'
-
-require('dotenv').config()
 
 const app = express()
 app.set('port', process.env.PORT || 8080)
@@ -90,13 +74,13 @@ http.createServer(app).listen(app.get('port'), () => {
 module.exports = app
 ```
 
-
 ### Edit `boot-es6.js`
 
 To use ES6 on the server, we need babel to transpile the code to supported js. However, in development, we can do this runtime, and avoid a buildstep. Don't use this for production, though.
 
 ```javascript
 // DO NOT USE FOR PRODUCTION!!!!
+require('dotenv').config()
 process.env.NODE_ENV = 'development';
 require("@babel/register");
 require('./server.js');
@@ -105,18 +89,18 @@ require('./server.js');
 ### Start server
 `node ./boot-es6.js`
 
-
-## Setup client
+## 2. Setup client
 
 ### Install Webpack for React development
 
-`npm install webpack webpack-cli babel-loader style-loader`
+`npm install -D webpack webpack-cli babel-loader style-loader`
 * installs webpack
  - webpack-cli is the command line interface that bundles the code
  - babel-loader transpiles ES6 code
- - style-loader bundles .css files
+ - [ ] style-loader injects .css into styletag in the dom using the bundled .js file.
+ - [ ] Probably skip style-loader and use extractcss
 
-`npm install @babel/preset-react`
+`npm install -D @babel/preset-react`
 * adds JSX syntax to babel transpiler
 
 `npm install react react-dom react-router-dom`
@@ -176,26 +160,32 @@ Add scripts to `package.json` for bundling the client
 
 # Create a Hello World, React App
 
-### Edit `src/App.jsx` 
+To test that everything works, with initial render from the server, using PageContext to handle initial state, and client side logic to take it from there.
+
+TODO:
+- [] Add Context here.
+
+### Edit `src/react/pages/HelloWorld.jsx` 
 
 ```javascript
 import React, { useState } from 'react'
 
-const App = () => {
+import './HelloWorld.css'
+
+const HelloWorld = () => {
   const [name, setName] = useState('World')
 
   return (
     <div>
-      <div>Count: {name}</div>
-      <div>Say hello to: <input type="text" value={name} onChange={event => setName(event.target.value)}</div>
+      <h1 className="greeting">Hello, {name}</h1>
+      <div>Say hello to:</div>
+      <div><input type="text" onChange=(e => setName(e..target.value) value={name}) placeholder="Type name here"/></div>
     </div>
   )
 }
 
-export default App
+export default HelloWorld
 ```
-
-- [ ] TODO: App.css
 
 ### Edit `src/client.js`
 
@@ -217,7 +207,7 @@ To use react on the server, you need to render to html, and insert into valid ht
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 
-import App from './src/App.jsx'
+import App from './react/pages/App.jsx'
 
 const template = (html) => `
 <!DOCTYPE html>
@@ -269,7 +259,7 @@ PM2 is a Process Manager that will monitor your node server, and restarts it, ei
 }
 ```
 
-## Setup React-Router for isomorphic routing
+## 3. Setup React-Router for isomorphic routing
 
 `npm install react-router-dom`
 
@@ -309,38 +299,6 @@ export const routes = [
 ]
 ```
 
-### Edit `src/routes.js` to define routes shared between server and client.
-
-```javascript
-import React from 'react'
-import { Link } from 'react-router-dom'
-
-import App from './react/App.jsx'
-
-// import components.
-const NavBar = () => <ul><li><Link to="/">Home</Link></li><li><Link to="/about">About</Link></li></ul>
-const Home = () => <div><h1>Home</h1><NavBar /></div>
-const About = () => <div><h1>About</h1><NavBar /></div>
-const NotFound = () => <div><h1>404 Not found!</h1><NavBar /></div>
-
-// export routes
-export const routes = [
-  {
-    path: "/",
-    exact: true,
-    component: Home
-  },
-  {
-    path: "/about",
-    exact: true,
-    component: About
-  },
-  {
-    component: NotFound
-  }
-]
-
-```
 
 ### Edit `src/react-server.js`
 
@@ -467,9 +425,29 @@ export default (req, res) => {
 }
 ```
 
-# Production build
+## 4. Deploy to Production
 
-### Minify js / css
+When deploying your app to production, you want the slow parts, e.g. transpiling to happen during build - not during runtime. You also want your app and css minified and ship your sourcemaps separately (or not at all)
+
+### Install Webpack plugins
+`npm install -D webpack-node-externals optimize-css-assets-webpack-plugin webpack-manifest-plugin`
+
+- _webpack-node-externals_ excludes node_modules for the serverside
+- _optimize-css-assets-webpack-plugin_ minifies css
+- _webpack-manifest-plugin_ creates `assets.json` containing the hashed filenames of the resulting bundles. The server will use this file to reference the script- and css-bundles when serving html.
+
+### Code changes:
+ - read assets.json
+
+### New Webpack.config for
+ - server + client
+ - optimization for vendor scripts.
+  - use externals for react / lodash CDN
+
+### Package.json:
+ - add script for build:prod
+ - add script for start:prod
+
 
 ```javascript
 ```
