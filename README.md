@@ -10,19 +10,19 @@ Although you can just clone the repo, I would encourage you to read the guide fr
 ### Pros and Cons
 Use this if 
  - you need full control (which you do for any enterprise project)
- - you are doing server side rendering
+ - you need server side rendering
  - you want to understand babel and webpack
 
 Don't use this if 
- - you need something quick
- - your project will not get deployed to product, e.g. if you are doing a Storybook component library
+ - you are just prototyping
+ - your project will not get deployed to production, e.g. if you are doing a Storybook component library
  - you mostly need the features from CRA. Check out https://github.com/timarney/react-app-rewired if you are just looking for CRA _with benefits_.
 
 ### Features
- - *Eslint + prettier* for codestyle and formatting
- - *React-Router* for client- and serverside routing
- - *expressjs* for the server
- - *webpack + babel* for bundling and transpiling
+ - **Eslint + prettier** for codestyle and formatting
+ - **React-Router** for client- and serverside routing
+ - **expressjs** for the server
+ - **webpack + babel** for bundling and transpiling
 
 ## 1. Setup server
 
@@ -31,9 +31,11 @@ creates an empty package.json that will hold the configuration of the project
 
 ### Install Babeljs
 
-`npm install -D @babel/core @babel/cli @babel/preset-env @babel/register @babel/plugin-transform-runtime`
-
-TODO: Explain babeljs packages
+`npm install -D @babel/core @babel/preset-env @babel/register @babel/plugin-transform-runtime`
+ * @babel/core is just that; core
+ * @babel/preset-env is a set of sensible defaults
+ * @babel/register is used for transpiling at runtime; this saves us from building the server while developing
+ * @babel/plugin-transform-runtime contains ES6 features needed with @babel/register
 
 ### Install expressjs
 
@@ -82,29 +84,36 @@ To use ES6 on the server, we need babel to transpile the code to supported js. H
 // DO NOT USE FOR PRODUCTION!!!!
 require('dotenv').config()
 process.env.NODE_ENV = 'development';
-require("@babel/register");
+process.env.PORT = 3001;
+require("@babel/register")({
+  plugins: ["@babel/plugin-transform-runtime"]
+});
+// ignore `import '*.css'` statements
+require.extensions['.css'] = () => {};
 require('./server.js');
 ```
 
-### Start server
+### Verify the server works
 `node ./boot-es6.js`
 
 ## 2. Setup client
 
 ### Install Webpack for React development
 
-`npm install -D webpack webpack-cli babel-loader style-loader`
+`npm install -D webpack webpack-cli babel-loader css-loader mini-css-extract-plugin`
 * installs webpack
  - webpack-cli is the command line interface that bundles the code
  - babel-loader transpiles ES6 code
- - [ ] style-loader injects .css into styletag in the dom using the bundled .js file.
- - [ ] Probably skip style-loader and use extractcss
+ - css-loader bundles .css files.
+ - mini-css-extract-plugin creates the files css-loader found into a single file (per entry in webpack conf)
 
 `npm install -D @babel/preset-react`
 * adds JSX syntax to babel transpiler
 
 `npm install react react-dom react-router-dom`
-* installs React
+* react is the library for React
+* react-dom renders React elements in the DOM or as html serverside.
+* react-router-dom handles clientside routing. Also works serverside.
 
 ### Edit `.babelrc`
 
@@ -120,11 +129,11 @@ require('./server.js');
 
 ### Edit `webpack.config.js`
 
-- [] See what happens, if I add mode: 'development'
 - [] Add Css extract here.
 
 ```javascript
 const path = require('path');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
   entry: {
@@ -132,18 +141,25 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: '[name].bundle.js',
+    filename: '[name].js',
   },
   devtool: 'inline-source-map',
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
+        test: /\.css$/i,
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      },
+      {
+        test: /\.(js|jsx)$/i,
         exclude: /node_modules/,
         loader: 'babel-loader',
       }
     ],
-  }
+  },
+  plugins: [
+    new MiniCssExtractPlugin(),
+  ],
 };
 ```
 
@@ -152,18 +168,24 @@ module.exports = {
 Add scripts to `package.json` for bundling the client
 ```json
   "scripts": {
-    "build:prod": "./node_modules/.bin/webpack --mode production",
     "build:dev": "./node_modules/.bin/webpack --mode development --watch",
+    "prestart": "node server.js",
     "start": "npm run build:dev"
   },
 ```
 
-# Create a Hello World, React App
+## Create a Hello World, React App
 
-To test that everything works, with initial render from the server, using PageContext to handle initial state, and client side logic to take it from there.
+Let's create a simple HelloWorld, that renders on the server, handles updates on the client and bundles css.
 
-TODO:
-- [] Add Context here.
+
+### Edit `src/react/pages/HelloWorld.css` 
+
+```css
+.greeting {
+  font-size: 2rem
+}
+```
 
 ### Edit `src/react/pages/HelloWorld.jsx` 
 
@@ -178,8 +200,8 @@ const HelloWorld = () => {
   return (
     <div>
       <h1 className="greeting">Hello, {name}</h1>
-      <div>Say hello to:</div>
-      <div><input type="text" onChange=(e => setName(e..target.value) value={name}) placeholder="Type name here"/></div>
+      <div>Say hello to: </div>
+      <div><input type="text" value={name} placeholder="Type name here" onChange={e => setName(e.target.value)}/></div>
     </div>
   )
 }
@@ -194,14 +216,14 @@ To use react on the client, you need to attach it to the dom.
 ```javascript
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './react/app.jsx';
+import HelloWorld from './react/app.jsx';
 
 ReactDOM.hydrate(<App />, document.getElementById('root'))
 ```
 
-### Edit `src/react-server.js`
+### Edit `src/server-react-middleware.js`
 
-To use react on the server, you need to render to html, and insert into valid html.
+To use react on the server, we need to render to html, and insert into valid html. We create this as middleware, and plug it into expressjs
 
 ```javascript
 import React from 'react';
@@ -233,25 +255,25 @@ export default (req, res) => {
 
 ### Edit `src/server.js`
 
-* Import `react-server` and use it to render all routes.
-* Serve the client bundle (output as main.bundle.js) using the express static middleware
+* Import `server-react-middleware` and use it to render all routes.
+* Serve the client bundle (output as main.js) using the express static middleware
 
 ```javascript
 import reactServer from './react-server'
 
 ...
 app.use(express.static('build'))
-app.use('*', reactServer);
+app.use(reactServer);
 
 ```
 
-# Install PM2 for running node
+## Install PM2 for running node
 
 PM2 is a Process Manager that will monitor your node server, and restarts it, either if it crashes (usually due to an uncaught exception) or, if --watch is applied, when your files change. PM2 is also great for a production setup.
 
 `npm install pm2`
 
-# Edit `package.json` to run pm2
+### Edit `package.json` to run pm2
 
 ```json
 {
@@ -275,12 +297,20 @@ Define routes in its own file, so both client and server can use it. We are like
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-// TODO import components
+// TODO: Create your own components
+import HelloWorld from './pages/HelloWorld.jsx'
 
-const NavBar = () => <ul><li><Link to="/">Home</Link></li><li><Link to="/">About</Link></li></ul>
+const NavBar = () => <ul><li><Link to="/">Home</Link></li><li><Link to="/hello">Hello</Link></li></ul>
 const Home = () => <div><h1>Home</h1><NavBar /></div>
-const About = () => <div><h1>About</h1><NavBar /></div>
-const NotFound = () => <div><h1>404 Not found!</h1><NavBar /></div>
+const Hello = () => <div><HelloWorld /><NavBar /></div>
+const NotFound = ({staticContext}) => {
+  // Source: https://reacttraining.com/react-router/web/guides/server-rendering
+  if (staticContext) {
+    staticContext.status = 404
+  }
+
+  return (<div><h1>404 Not found!</h1><NavBar /></div>)
+}
 
 export const routes = [
   {
@@ -289,9 +319,9 @@ export const routes = [
     component: Home
   },
   {
-    path: "/app",
+    path: "/hello",
     exact: true,
-    component: About
+    component: Hello
   },
   {
     component: NotFound
@@ -300,7 +330,7 @@ export const routes = [
 ```
 
 
-### Edit `src/react-server.js`
+### Edit `src/server-react-middleware.js`
 
 ```javascript
 import { StaticRouter, Switch, Route } from "react-router-dom";
@@ -367,7 +397,7 @@ _You don't need to define and import routes array. You can get away with only us
 
 ```javascript
 const routes = {
-  '/hello-world': () => ({name: 'Your name'})
+  '/hello': () => ({name: 'Server'})
 }
 
 export const loadData = (match) => {
@@ -375,53 +405,136 @@ export const loadData = (match) => {
 }
 ```
 
-### Edit `src/react-server.js`
+### Edit `src/react/context.js`
+
+With InitialDataContext the server data can be exposed to the client without handing down props at every level
 
 ```javascript
+import { createContext } from 'react'
+
+export const InitialDataContext = createContext()
+```
+
+### Edit `src/react/hooks.js`
+
+A custom `useInitialData()` hook will make getting the data on the client easy.
+
+
+```javascript
+import { useEffect, useContext, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+
+import { InitialDataContext } from './context'
+
+
+export const useInitialData = (asyncLoad) => {
+  const initialData = useContext(InitialDataContext)
+  const [data, setdata] = useState(initialData)
+
+  useEffect(() => {
+    if (!initialData && typeof asyncLoad === 'function') {
+      (async () => {
+        const result = await asyncLoad()
+        setdata(result)
+      })()
+    }
+  }, [])
+
+  return data
+}
+
+```
+
+### Edit `src/react/app.js`
+
+```javascript
+import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Switch, Route,  useLocation } from "react-router-dom";
+import { routes } from './routes'
+import { InitialDataContext } from './context'
+
+export const App = ({data}) => (
+  <InitialDataContext.Provider value={data}>
+    <Switch>
+      {routes.map((route, i) => (
+        <Route {...route} key={i}/>
+      ))}
+    </Switch>
+  </InitialDataContext.Provider>
+)
+
+export const Client = () => {
+  const initialData = window.__INIT_DATA__
+  const location = useLocation()
+
+  // Clear the initial data, when user navigates in the browser
+  useEffect(() => {
+    delete window.__INIT_DATA__
+  }, [location])
+
+  return <App data={initialData}/>
+}
+```
+
+
+### Edit `src/client.js`
+
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { BrowserRouter } from "react-router-dom";
+
+import { Client } from './react/app'
+
+ReactDOM.hydrate(
+  <BrowserRouter>
+    <Client />
+  </BrowserRouter>
+  , document.getElementById('root')
+)
+```
+
+
+### Edit `src/server-react-middleware.js`
+
+```javascript
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import { StaticRouter, matchPath } from "react-router-dom";
+import { routes } from './react/routes'
+import { App } from './react/app'
 import { loadData } from './server-data.js'
 
 ...
 
 // Export ReactServer as middleware
-export default (req, res) => {
+export default async (req, res) => {
   const { originalUrl } = req
 
-  const promises = [];
-  routes.some(route => {
-    const match = matchPath(originalUrl, route);
-    if (match && route.loadData) {
-      promises.push(loadData(match));
-    }
+  const promises = routes
+    .map(route => matchPath(originalUrl, route))
+    .filter(match => match)
+    .map(match => loadData(match))
 
-    return match;
-  })
+  const data = await Promise.all(promises)
+  const context = {}
 
-  Promise.all(promises).then(data => {
-    const context = {}
+  const html = renderToString(
+    <StaticRouter location={originalUrl} context={context}>
+      <App data={data[0]} />
+    </StaticRouter>
+  )
 
-    const html = renderToString(
-      <StaticRouter location={originalUrl} context={context}>
-        <Switch>
-          {routes.map(route => (
-            <Route {...route} key={route.path}/>
-          ))}
-        </Switch>
-      </StaticRouter>
-    )
+  if (context.url && context.status) {
+    return res.redirect(context.status, context.url)
+  }
+  else if (context.url) {
+    return res.redirect(302, context.url)
+  }
 
-    if (context.url && context.status) {
-      return res.redirect(context.status, context.url);
-    }
-    else if (context.url) {
-      return res.redirect(302, context.url);
-    }
-    else if (context.status) {
-      return res.status(context.status).send(html);
-    }
-
-    // default to 200 OK
-    return res.send(template(html, data));
-  })
+  // default to 200 OK
+  return res.send(template(html, data[0])).status(context.status || 200)
 }
 ```
 
@@ -436,6 +549,10 @@ When deploying your app to production, you want the slow parts, e.g. transpiling
 - _optimize-css-assets-webpack-plugin_ minifies css
 - _webpack-manifest-plugin_ creates `assets.json` containing the hashed filenames of the resulting bundles. The server will use this file to reference the script- and css-bundles when serving html.
 
+`npm install nconf`
+
+ * _nconf_ reads assets.json configuration
+
 ### Code changes:
  - read assets.json
 
@@ -447,6 +564,9 @@ When deploying your app to production, you want the slow parts, e.g. transpiling
 ### Package.json:
  - add script for build:prod
  - add script for start:prod
+
+### Package.json:
+ - add config with env for pm2 in prod
 
 
 ```javascript

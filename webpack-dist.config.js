@@ -53,7 +53,7 @@ const client = {
 
 const server = {
   target: 'node',
-  externals: [nodeExternals(), 'assets.json'],
+  externals: [nodeExternals()],
   entry: {
     server: './src/server.js'
   },

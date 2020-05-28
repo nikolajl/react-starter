@@ -11,7 +11,6 @@ import path from 'path'
 config.file('assets', 'assets.json' )
 
 const assets = config.stores.assets.get()
-console.log('---- > assets', assets)
 
 const css = `<link rel="stylesheet" href="/${assets['main.css']}"/>`
 const js = (('vendors~main.js' in assets) ? `<script type="application/javascript" src="/${assets['vendors~main.js']}"></script>` : '')
