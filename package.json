@@ -4,15 +4,14 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
-    "clean": "cd dist && rm -rf",
-    "build:prod": "./node_modules/.bin/webpack --mode production --config webpack-dist.config.js --env.NODE_ENV=production",
-    "build:dev": "./node_modules/.bin/webpack --mode development --watch",
-    "prestart": "./node_modules/.bin/pm2 start boot-es6.js --watch || exit 0",
-    "stop": "./node_modules/.bin/pm2 stop boot-es6.js",
+    "build:prod": "rm -rf dist && webpack --mode production --config webpack-dist.config.js --env.NODE_ENV=production",
+    "build:dev": "webpack --mode development --watch",
+    "prestart": "pm2 start boot-es6.js --watch || exit 0",
+    "stop": "pm2 stop boot-es6.js",
     "start": "npm run build:dev",
     "log": "pm2 log",
     "start:prod": "PORT=3002 node dist/server.js",
-    "lint": "./node_modules/.bin/eslint server client shared iso-middleware --ext .js,.jsx --fix"
+    "lint": "eslint src --ext .js,.jsx --fix"
   },
   "keywords": [],
   "author": "",

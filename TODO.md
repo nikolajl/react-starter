@@ -13,6 +13,9 @@ Here are some thoughts that didn't make it into the first draft:
 
 ### Experiment with optimization chunks in `webpack-dist.config.js`
 
+TODO:
+- [ ] See what happens, if I add mode: 'development' and 'production'
+
 ```javascript
   optimization: {
     runtimeChunk: 'single',

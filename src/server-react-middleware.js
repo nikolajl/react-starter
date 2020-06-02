@@ -1,6 +1,6 @@
-import React from 'react';
-import { renderToString } from 'react-dom/server';
-import { StaticRouter, matchPath } from "react-router-dom";
+import React from 'react'
+import { renderToString } from 'react-dom/server'
+import { StaticRouter, matchPath } from 'react-router-dom'
 
 import config from 'nconf'
 import { routes } from './react/routes'
@@ -8,13 +8,16 @@ import { App } from './react/app'
 import { loadData } from './server-data.js'
 import path from 'path'
 
-config.file('assets', 'assets.json' )
+config.file('assets', 'assets.json')
 
 const assets = config.stores.assets.get()
 
 const css = `<link rel="stylesheet" href="/${assets['main.css']}"/>`
-const js = (('vendors~main.js' in assets) ? `<script type="application/javascript" src="/${assets['vendors~main.js']}"></script>` : '')
-         + `<script type="application/javascript" src="/${assets['main.js']}"></script>`
+const js =
+  ('vendors~main.js' in assets
+    ? `<script type="application/javascript" src="/${assets['vendors~main.js']}"></script>`
+    : '') +
+  `<script type="application/javascript" src="/${assets['main.js']}"></script>`
 
 const template = (html, data) => `
 <!DOCTYPE html>
@@ -25,22 +28,22 @@ const template = (html, data) => `
   </head>
   <body>
     <div id="root">${html}</div>
-    ${data 
-      ? `<script>window.__INIT_DATA__ = ${JSON.stringify(data)}</script>${js}`
-      : js
+    ${
+      data
+        ? `<script>window.__INIT_DATA__ = ${JSON.stringify(data)}</script>${js}`
+        : js
     }
   </body>
 </html>`
-
 
 // Export ReactServer as middleware
 export default async (req, res) => {
   const { originalUrl } = req
 
   const promises = routes
-    .map(route => matchPath(originalUrl, route))
-    .filter(match => match)
-    .map(match => loadData(match))
+    .map((route) => matchPath(originalUrl, route))
+    .filter((match) => match)
+    .map((match) => loadData(match))
 
   const data = await Promise.all(promises)
   const context = {}
@@ -53,8 +56,7 @@ export default async (req, res) => {
 
   if (context.url && context.status) {
     return res.redirect(context.status, context.url)
-  }
-  else if (context.url) {
+  } else if (context.url) {
     return res.redirect(302, context.url)
   }
 

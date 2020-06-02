@@ -1,3 +1,4 @@
+process.env.NODE_ENV = 'production'
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
@@ -7,6 +8,7 @@ const { DefinePlugin } = require("webpack");
 const ManifestPlugin = require('webpack-manifest-plugin');
 
 const common = {
+  mode: 'production',
   entry: {
     main: './src/client.js'
   },
@@ -29,7 +31,11 @@ const common = {
     ],
   },
   plugins: [
-    new MiniCssExtractPlugin()
+    new MiniCssExtractPlugin(),
+    // Define compile time global variables, like feature flags, urls, DB-connections, etc.
+    new DefinePlugin({
+      PRODUCTION: JSON.stringify(true)
+    })
   ],
 };
 
@@ -60,12 +66,7 @@ const server = {
   output: Object.assign({}, common.output, {filename: '[name].js'}),
   module: common.module,
   devtool: common.devtool,
-  plugins: common.plugins.concat([
-    // Define compile time global variables, like feature flags, urls, DB-connections, etc.
-    new DefinePlugin({
-      PRODUCTION: JSON.stringify(true)
-    })
-  ]),
+  plugins: common.plugins,
 }
 
 module.exports = [client, server];

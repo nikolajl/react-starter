@@ -1,8 +1,6 @@
-import { useEffect, useContext, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useContext, useState } from 'react'
 
 import { InitialDataContext } from './context'
-
 
 export const useInitialData = (asyncLoad) => {
   const initialData = useContext(InitialDataContext)
@@ -10,7 +8,7 @@ export const useInitialData = (asyncLoad) => {
 
   useEffect(() => {
     if (!initialData) {
-      (async () => {
+      ;(async () => {
         const result = await asyncLoad()
         setdata(result)
       })()
@@ -19,4 +17,3 @@ export const useInitialData = (asyncLoad) => {
 
   return data
 }
-
