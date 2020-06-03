@@ -45,15 +45,28 @@ creates an empty package.json that will hold the configuration of the project
 
 ### Edit `.babelrc`
 
+Rather than adding every plugin separately, we use the preset (bundle) `@babel/preset-env`. Tweak the configuration to include the browsers you wish to target here: https://browserl.ist/
+
 ```json
 {
   "presets": [
-    "@babel/preset-env"
-  ]
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "browsers": "> 1%",
+          "node": 12
+        }
+      }
+    ],
+  ],
+  "plugins": ["@babel/plugin-transform-runtime"]
 }
 ```
 
 ### Edit `src/server.js`
+
+Configures an Expressjs server running on port 8080, unless specified in environment variable `PORT`. Any files added to a `./public` folder will also be served as is (although we have not yet created a public folder; do so when you need it).
 
 ```javascript
 import express from 'express'
@@ -78,11 +91,10 @@ module.exports = app
 
 ### Edit `boot-es6.js`
 
-To use ES6 on the server, we need babel to transpile the code to supported js. However, in development, we can do this runtime, and avoid a buildstep. Don't use this for production, though.
+To use ES6 on the server, we need babel to transpile the code to supported js. However, in development, we can do this runtime, and avoid a buildstep. Don't use this for production, though. We are also overriding a few environment variables, just in case.
 
 ```javascript
 // DO NOT USE FOR PRODUCTION!!!!
-require('dotenv').config()
 process.env.NODE_ENV = 'development';
 process.env.PORT = 3001;
 require("@babel/register")({
@@ -120,16 +132,24 @@ require('./server.js');
 ```json
 {
   "presets": [
-    "@babel/preset-env", "@babel/preset-react"
-  ]
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "browsers": "> 1%",
+          "node": 12
+        }
+      }
+    ],
+    "@babel/preset-react"
+  ],
+  "plugins": ["@babel/plugin-transform-runtime"]
 }
 ```
 
 ## Setup webpack for Reactjs
 
 ### Edit `webpack.config.js`
-
-- [] Add Css extract here.
 
 ```javascript
 const path = require('path');
@@ -216,9 +236,9 @@ To use react on the client, you need to attach it to the dom.
 ```javascript
 import React from 'react';
 import ReactDOM from 'react-dom';
-import HelloWorld from './react/app.jsx';
+import HelloWorld from './react/pages/HelloWorld.jsx';
 
-ReactDOM.hydrate(<App />, document.getElementById('root'))
+ReactDOM.hydrate(<HelloWorld />, document.getElementById('root'))
 ```
 
 ### Edit `src/server-react-middleware.js`
