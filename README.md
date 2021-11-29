@@ -1,4 +1,77 @@
 # react-starter
+Hej Thomas,
+
+
+Så har jeg kigget på den lange liste - og du har helt ret - der er plads til forbedring.
+
+Jeg har givet mit ufiltrerede feedback nedenfor, hvis det kan bruges til noget - ellers kan du arkivere det i skraldespanden :-)
+
+Udover kompetencelisten lagde jeg mærke til at adressen heller ikke passer. Jeg er nok flyttet siden sidst.
+
+Den nye adresse er:
+Engblommevej 30
+2400 København NV
+
+Mvh. Nikolaj...
+
+
+og så til ufiltreret feedback.
+
+Der er flere problemer med listen, men de 2 store problemer er: Kategorierne (fanerne) giver ingen mening, og der er mange dubletter.
+
+Mit forslag (tl;dr): 
+* Drop versioner, og fjern dubletter. Det vil reducere listen betydeligt.
+* Reducer kategorierne til: Rolle, Branche, Arbejdsområde, Metode og Teknologi/Værktøj.
+
+Problemerne er mange, men her er et par eksempler:
+
+Angular (der er et javascript framework) findes i kategorierne:
+  Standard software:	Angular
+  Java EE:	Angular 2+
+  Java EE:	AngularJS
+... men ikke i kategorien WEB, hvor den burde være.
+
+Et andet eksempel er MS SQL Server, der findes i flere versioner og kategorier:
+  Database:	Microsoft SQL
+  Database:	MS SQL
+  Databaseværktøjer:	MS SQL 2016
+  Databaseværktøjer:	MS SQL 2017
+  Databaseværktøjer:	MS SQL 2017
+  Databaseværktøjer:	MS SQL 2019
+  Databaseværktøjer:	MS SQL2000
+  Databaseværktøjer:	MS SQL2005
+  Databaseværktøjer:	MS SQL2008
+  Databaseværktøjer:	MS SQL2008R2
+  Databaseværktøjer:	MS SQL2012
+  Databaseværktøjer:	MS SQL2014
+  Databaseværktøjer:	MS SQL2016
+  Database:	SQL Server Management Studio
+  Databaseværktøjer:	SQL Server Management Studio
+
+Så er der dem der bare forskellige navne for præcis det samme:
+  Programmeringssprog	.NET
+  Programmeringssprog	C#.NET
+  Programmeringssprog	C#
+
+eller
+  WEB	.NET MVC
+  Teknologi	ASP.NET MVC
+
+Og endelig dem der er i helt forkerte kategorier:
+  Programmeringssprog:	Tortoise SVN
+... som er et windows program, ikke et programmeringssprog.
+
+Når jeg fjerner versioner og dubletter reduceres min liste af kompetencer fra 350 til ca. 150 (med 20 års erfaring har jeg nok flere end de fleste).
+
+Det er selvfølgelig et stort stykke arbejde - men mon ikke I kan finde en studentermedhjælp, der med hjælp fra Google kan gøre det meste.
+
+Hvis du er kommet så langt i mailen - så, tak for ordet. Nu skal jeg nok lade dig komme tilbage til dit rigtige arbejde :o)
+
+
+Mvh. Nikolaj.
+
+
+
 Repo for starting a new React project.
 
 This should be used as a replacement for Create-react-app.
